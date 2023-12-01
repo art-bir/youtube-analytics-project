@@ -3,18 +3,11 @@ import os
 
 from googleapiclient.discovery import build
 
-api_key: str = os.getenv('YT_API_KEY')
-
-youtube = build('youtube', 'v3', developerKey=api_key)
-
-
-def printj(dict_to_print: dict) -> None:
-    """Выводит словарь в json-подобном удобном формате с отступами"""
-    print(json.dumps(dict_to_print, indent=2, ensure_ascii=False))
-
 
 class Channel:
     """Класс для ютуб-канала"""
+
+    api_key: str = os.getenv('YT_API_KEY')
 
     def __init__(self, channel_id: str) -> None:
         """
@@ -23,8 +16,8 @@ class Channel:
         """
 
         self.channel = \
-            youtube.channels().list(id=channel_id,
-                                    part='snippet,statistics').execute()
+            self.get_service().channels().list(
+                id=channel_id, part='snippet,statistics').execute()
         self.title = self.channel['items'][0]['snippet']['title']
         self.description = self.channel['items'][0]['snippet']['description']
         self.url = \
@@ -40,15 +33,21 @@ class Channel:
         return self.__channel_id
 
     def to_json(self, name: str):
-        """ Создает файл 'moscowpython.json' c данными по каналу"""
+        """ Создает файл {name_of_channel}.json' c данными по каналу"""
         with open(f"../src/{name}", mode='w+') as file:
             json.dump(self.channel, file, indent=2, ensure_ascii=False)
 
     def print_info(self) -> None:
         """Выводит в консоль информацию о канале."""
-        printj(self.channel)
+        self.printj(self.channel)
 
     @classmethod
     def get_service(cls):
         """Получает объект для работы с API вне класса"""
-        return build('youtube', 'v3', developerKey=api_key)
+        return build('youtube', 'v3',
+                     developerKey=cls.api_key)
+
+    @staticmethod
+    def printj(dict_to_print: dict) -> None:
+        """Выводит словарь в json-подобном удобном формате с отступами"""
+        print(json.dumps(dict_to_print, indent=2, ensure_ascii=False))
